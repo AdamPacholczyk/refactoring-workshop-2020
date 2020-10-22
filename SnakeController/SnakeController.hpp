@@ -5,6 +5,7 @@
 
 #include "IEventHandler.hpp"
 #include "SnakeInterface.hpp"
+//komentarz testowy
 
 class Event;
 class IPort;
