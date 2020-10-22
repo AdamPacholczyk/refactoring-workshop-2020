@@ -61,31 +61,44 @@ Controller::Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePo
     } else {
         throw ConfigurationError();
     }
+   
 }
 
-void Controller::receive(std::unique_ptr<Event> e)
+void Controller::makeSegment(Segment& newSegment){
+     Segment const& currentHead = m_segments.front();        
+        newSegment.x = currentHead.x + ((m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
+        newSegment.y = currentHead.y + (not (m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
+        newSegment.ttl = currentHead.ttl;
+}
+
+bool Controller::checkIfLost(Segment newHead)
 {
-    try {
-        auto const& timerEvent = *dynamic_cast<EventT<TimeoutInd> const&>(*e);
-
-        Segment const& currentHead = m_segments.front();
-
-        Segment newHead;
-        newHead.x = currentHead.x + ((m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
-        newHead.y = currentHead.y + (not (m_currentDirection & 0b01) ? (m_currentDirection & 0b10) ? 1 : -1 : 0);
-        newHead.ttl = currentHead.ttl;
-
-        bool lost = false;
-
-        for (auto segment : m_segments) {
+    bool lost = false;
+     for (auto segment : m_segments) {
             if (segment.x == newHead.x and segment.y == newHead.y) {
                 m_scorePort.send(std::make_unique<EventT<LooseInd>>());
                 lost = true;
                 break;
             }
         }
+        return lost;
+}
 
-        if (not lost) {
+void Controller::receive(std::unique_ptr<Event> e)
+{
+    try {
+        auto const& timerEvent = *dynamic_cast<EventT<TimeoutInd> const&>(*e);    
+        Segment newHead;
+        makeSegment(newHead);
+        
+       
+
+        bool lost = false;
+        lost = checkIfLost(newHead);
+       
+
+       if (not lost) 
+        {
             if (std::make_pair(newHead.x, newHead.y) == m_foodPosition) {
                 m_scorePort.send(std::make_unique<EventT<ScoreInd>>());
                 m_foodPort.send(std::make_unique<EventT<FoodReq>>());
@@ -101,7 +114,6 @@ void Controller::receive(std::unique_ptr<Event> e)
                         l_evt.x = segment.x;
                         l_evt.y = segment.y;
                         l_evt.value = Cell_FREE;
-
                         m_displayPort.send(std::make_unique<EventT<DisplayInd>>(l_evt));
                     }
                 }
