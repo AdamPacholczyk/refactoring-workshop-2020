@@ -5,7 +5,6 @@
 
 #include "IEventHandler.hpp"
 #include "SnakeInterface.hpp"
-//komentarz testowy
 
 class Event;
 class IPort;
@@ -28,7 +27,7 @@ public:
     Controller(IPort& p_displayPort, IPort& p_foodPort, IPort& p_scorePort, std::string const& p_config);
 
     Controller(Controller const& p_rhs) = delete;
-    Controller& operator=(Controller const& p_rhs) = delete;    
+    Controller& operator=(Controller const& p_rhs) = delete;
 
     void receive(std::unique_ptr<Event> e) override;
 
@@ -49,11 +48,6 @@ private:
 
     Direction m_currentDirection;
     std::list<Segment> m_segments;
-
-    //new methods
-    void makeSegment(Segment& newSegment);
-    bool checkIfLost(Segment newHead);
-    
 };
 
 } // namespace Snake
