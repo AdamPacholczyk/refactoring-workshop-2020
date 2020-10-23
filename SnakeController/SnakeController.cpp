@@ -214,24 +214,47 @@ Controller::Segment Controller::getNewHead() const
 }
 
 void Controller::receive(std::unique_ptr<Event> e)
-{
-    try {
-        handleTimePassed(*dynamic_cast<EventT<TimeoutInd> const&>(*e));
-    } catch (std::bad_cast&) {
-        try {
-            handleDirectionChange(*dynamic_cast<EventT<DirectionInd> const&>(*e));
-        } catch (std::bad_cast&) {
-            try {
-                handleFoodPositionChange(*dynamic_cast<EventT<FoodInd> const&>(*e));
-            } catch (std::bad_cast&) {
-                try {
-                    handleNewFood(*dynamic_cast<EventT<FoodResp> const&>(*e));
-                } catch (std::bad_cast&) {
-                    throw UnexpectedEventException();
-                }
-            }
-        }
+{   
+    
+    std::uint32_t event = e->getMessageId();
+    switch (event)
+    {
+        case 0x20 : 
+        std::unique_ptr<TimeoutInd>timeout(std::make_unique<TimeoutInd>(e->clone()));
+        handleTimePassed(*static_cast<EventT<TimeoutInd> const &>(*timeout));
+        break;
+        case 0x10 :
+        std::unique_ptr<DirectionInd>timeout(std::make_unique<DirectionInd>(e->clone()));
+        handleTimePassed(*static_cast<EventT<DirectionInd> const &>(*timeout));
+        handleDirectionChange(e->clone());
+        break;
+        case 0x40 :
+        handleFoodPositionChange(e->clone());
+        break;
+        case 0x42 :
+        handleNewFood(e->clone());
+        break;
+        default :
+        throw UnexpectedEventException();
+        break;
     }
+    // try {
+    //     handleTimePassed(*dynamic_cast<EventT<TimeoutInd> const&>(*e));
+    // } catch (std::bad_cast&) {
+    //     try {
+    //         handleDirectionChange(*dynamic_cast<EventT<DirectionInd> const&>(*e));
+    //     } catch (std::bad_cast&) {
+    //         try {
+    //             handleFoodPositionChange(*dynamic_cast<EventT<FoodInd> const&>(*e));
+    //         } catch (std::bad_cast&) {
+    //             try {
+    //                 handleNewFood(*dynamic_cast<EventT<FoodResp> const&>(*e));
+    //             } catch (std::bad_cast&) {
+    //                 throw UnexpectedEventException();
+    //             }
+    //         }
+    //     }
+    // }
 }
 
 } // namespace Snake
